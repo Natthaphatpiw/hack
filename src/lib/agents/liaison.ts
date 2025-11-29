@@ -8,6 +8,256 @@ import { generateWithLLM } from '../llm/client';
 import { getSupabaseServer } from '../supabase/server';
 import type { AgentLog, ThinkingRound, Notification } from '@/types';
 
+// Helper function to create work order card message
+function createWorkOrderCard(workOrder: any) {
+  const workOrderId = workOrder.id;
+  const machineName = workOrder.machine_id || 'Unknown Machine';
+  const priority = workOrder.priority || 'MEDIUM';
+  const scheduledTime = workOrder.scheduled_start ?
+    new Date(workOrder.scheduled_start).toLocaleString('th-TH') : 'ไม่ระบุ';
+
+  const priorityColor = {
+    'LOW': '#10B981',      // Green
+    'MEDIUM': '#F59E0B',   // Yellow
+    'HIGH': '#EF4444',     // Red
+    'URGENT': '#DC2626'    // Dark Red
+  };
+
+  return {
+    type: 'flex',
+    altText: `งานซ่อมเครื่องจักร: ${machineName}`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '🔧 งานซ่อมเครื่องจักร',
+            weight: 'bold',
+            size: 'xl',
+            color: '#FFFFFF'
+          }
+        ],
+        backgroundColor: '#1E293B',
+        paddingAll: '20px'
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              {
+                type: 'text',
+                text: 'เครื่องจักร:',
+                size: 'sm',
+                color: '#64748B',
+                flex: 2
+              },
+              {
+                type: 'text',
+                text: machineName,
+                size: 'sm',
+                color: '#FFFFFF',
+                weight: 'bold',
+                flex: 3
+              }
+            ],
+            margin: 'md'
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              {
+                type: 'text',
+                text: 'ความสำคัญ:',
+                size: 'sm',
+                color: '#64748B',
+                flex: 2
+              },
+              {
+                type: 'text',
+                text: priority,
+                size: 'sm',
+                color: priorityColor[priority as keyof typeof priorityColor] || '#64748B',
+                weight: 'bold',
+                flex: 3
+              }
+            ],
+            margin: 'md'
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              {
+                type: 'text',
+                text: 'กำหนดเวลา:',
+                size: 'sm',
+                color: '#64748B',
+                flex: 2
+              },
+              {
+                type: 'text',
+                text: scheduledTime,
+                size: 'sm',
+                color: '#FFFFFF',
+                flex: 3
+              }
+            ],
+            margin: 'md'
+          },
+          {
+            type: 'separator',
+            margin: 'lg'
+          },
+          {
+            type: 'text',
+            text: workOrder.description || 'กรุณาดำเนินการซ่อมเครื่องจักรตามแผนงาน',
+            size: 'sm',
+            color: '#E2E8F0',
+            wrap: true,
+            margin: 'md'
+          }
+        ]
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              {
+                type: 'button',
+                action: {
+                  type: 'postback',
+                  label: 'รับงาน',
+                  data: `accept_work:${workOrderId}`,
+                  displayText: 'ฉันรับงานนี้แล้ว'
+                },
+                color: '#10B981',
+                style: 'primary',
+                margin: 'sm'
+              },
+              {
+                type: 'button',
+                action: {
+                  type: 'postback',
+                  label: 'ซ่อมเสร็จ',
+                  data: `complete_work:${workOrderId}`,
+                  displayText: 'งานซ่อมเสร็จแล้ว'
+                },
+                color: '#3B82F6',
+                style: 'secondary',
+                margin: 'sm'
+              }
+            ],
+            spacing: 'sm'
+          }
+        ],
+        backgroundColor: '#0F172A'
+      },
+      styles: {
+        hero: {
+          backgroundColor: '#1E293B'
+        },
+        body: {
+          backgroundColor: '#0F172A'
+        },
+        footer: {
+          backgroundColor: '#0F172A'
+        }
+      }
+    }
+  };
+}
+
+// Helper function to create manager notification card
+function createManagerNotificationCard(notification: any) {
+  const timestamp = new Date().toLocaleString('th-TH');
+
+  return {
+    type: 'flex',
+    altText: `แจ้งเตือน: ${notification.title}`,
+    contents: {
+      type: 'bubble',
+      hero: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '📊 แจ้งเตือนจากระบบ',
+            weight: 'bold',
+            size: 'lg',
+            color: '#FFFFFF'
+          }
+        ],
+        backgroundColor: '#1E293B',
+        paddingAll: '15px'
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: notification.title,
+            weight: 'bold',
+            size: 'md',
+            color: '#FFFFFF',
+            margin: 'md'
+          },
+          {
+            type: 'text',
+            text: notification.content,
+            size: 'sm',
+            color: '#E2E8F0',
+            wrap: true,
+            margin: 'md'
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              {
+                type: 'text',
+                text: 'เวลา:',
+                size: 'xs',
+                color: '#64748B',
+                flex: 1
+              },
+              {
+                type: 'text',
+                text: timestamp,
+                size: 'xs',
+                color: '#94A3B8',
+                flex: 2
+              }
+            ],
+            margin: 'md'
+          }
+        ]
+      },
+      styles: {
+        hero: {
+          backgroundColor: '#1E293B'
+        },
+        body: {
+          backgroundColor: '#0F172A'
+        }
+      }
+    }
+  };
+}
+
 export async function runLiaisonAgent(state: GraphStateType): Promise<Partial<GraphStateType>> {
   const startTime = Date.now();
   const thinkingRounds: ThinkingRound[] = [];
@@ -160,6 +410,11 @@ ${state.safetyApproval ? `Safety Decision:
 Recipients to notify:
 ${recipients.map(r => `- ${r.type}: Priority ${r.priority}`).join('\n')}
 
+${state.workOrder ? `แจ้งเตือนผู้บริหาร:
+- แจ้งการวางแผนงานซ่อมให้ช่าง ${state.workOrder.assignedTechnician}
+- แสดง business impact และ ROI
+- ติดตาม progress จนกว่าจะเสร็จสิ้น` : ''}
+
 ตอบในรูปแบบ JSON พร้อม LINE card specifications:
 
 {
@@ -216,6 +471,55 @@ ${recipients.map(r => `- ${r.type}: Priority ${r.priority}`).join('\n')}
             "Business Impact": "ลด downtime 4 ชั่วโมง",
             "Production Saved": "6,000 THB"
           }
+    },
+    {
+      "message_id": "WO-PLANNED-001",
+      "recipient_type": "PLANT_MANAGER",
+      "recipient_line_id": "U987654321fedcba",
+      "recipient_name": "นวลพรรณ สวยงาม",
+      "message_type": "WORK_ORDER_PLANNED",
+      "priority": "MEDIUM",
+      "card_design": {
+        "header_color": "#2196F3",
+        "icon": "📋",
+        "title": "📋 วางแผนงานซ่อม: เปลี่ยนตลับลูกปืนปั๊มน้ำ",
+        "subtitle": "BLR-PMP-01 • มอบหมายให้ช่าง สมชาย ใจดี",
+        "image_url": null
+      },
+      "content_sections": [
+        {
+          "type": "work_summary",
+          "title": "🔧 สรุปงานซ่อม",
+          "data": {
+            "ช่างผู้รับผิดชอบ": "สมชาย ใจดี",
+            "กำหนดเริ่มงาน": "22:00 น. วันนี้",
+            "เวลาโดยประมาณ": "4 ชั่วโมง",
+            "ค่าซ่อมโดยประมาณ": "5,000 THB"
+          }
+        },
+        {
+          "type": "business_impact",
+          "title": "💰 ผลกระทบทางธุรกิจ",
+          "data": {
+            "ป้องกัน downtime": "4 ชั่วโมง",
+            "มูลค่าการผลิตที่รักษา": "6,000 THB",
+            "ROI จากการซ่อมล่วงหน้า": "120%",
+            "ความเสี่ยงถ้าไม่ซ่อม": "Critical Failure"
+          }
+        }
+      ],
+      "action_buttons": [
+        {
+          "label": "✅ อนุมัติแผนงาน",
+          "action": "APPROVE_WORK_ORDER",
+          "color": "#4CAF50"
+        },
+        {
+          "label": "🔄 ปรับแผนงาน",
+          "action": "MODIFY_WORK_ORDER",
+          "color": "#FF9800"
+        }
+      ]
     }
   ],
       "action_buttons": [
@@ -455,7 +759,7 @@ ${parsedResponse.line_communications?.map((n: any) => `- ${n.recipient_type}: LI
   };
   
   await saveAgentLog(agentLog);
-  await saveNotifications(state.sessionId, state.machineId, notifications);
+  await saveNotifications(state.sessionId, state.machineId, notifications, state.workOrder);
   await updatePipelineStatus(
     state.sessionId, 
     'LIAISON', 
@@ -507,46 +811,125 @@ async function saveAgentLog(log: AgentLog) {
   });
 }
 
-async function saveNotifications(sessionId: string, machineId: string, lineCommunications: any[]) {
+async function saveNotifications(sessionId: string, machineId: string, lineCommunications: any[], workOrder?: any) {
   const supabase = getSupabaseServer();
 
-  // Get technician line IDs
-  const { data: technicians } = await supabase
-    .from('technicians')
-    .select('name, line_id, employee_id');
+  // Get employee line IDs from employees table
+  const { data: employees } = await supabase
+    .from('employees')
+    .select('name, line_user_id, role');
 
-  const techMap = new Map(technicians?.map(t => [t.name, { lineId: t.line_id, employeeId: t.employee_id }]) || []);
+  const employeeMap = new Map(employees?.map(e => [e.name, {
+    lineId: e.line_user_id,
+    role: e.role
+  }]) || []);
 
   for (const comm of lineCommunications) {
     let recipientLineId = null;
     let recipientName = comm.recipient_name;
 
-    // Map recipient to line ID
+    // Map recipient to line ID from employees table
     if (comm.recipient_type === 'TECHNICIAN') {
-      const techInfo = techMap.get(comm.recipient_name);
-      recipientLineId = techInfo?.lineId;
-    } else if (comm.recipient_type === 'PLANT_MANAGER') {
-      // For demo, use a mock line ID for manager
-      recipientLineId = 'U987654321fedcba';
+      const empInfo = employeeMap.get(comm.recipient_name);
+      recipientLineId = empInfo?.lineId;
+    } else if (comm.recipient_type === 'PLANT_MANAGER' || comm.recipient_type === 'MAINTENANCE_HEAD') {
+      // Find manager/supervisor from employees
+      const managers = employees?.filter(e =>
+        e.role === 'MANAGER' || e.role === 'SUPERVISOR'
+      ) || [];
+      if (managers.length > 0) {
+        recipientLineId = managers[0].line_user_id;
+        recipientName = managers[0].name;
+      } else {
+        // Fallback mock ID for demo
+        recipientLineId = 'U987654321fedcba';
+      }
     }
 
-    await supabase.from('notifications').insert({
-      session_id: sessionId,
-      machine_id: machineId,
-      recipient_type: comm.recipient_type,
-      recipient_name: recipientName,
-      recipient_line_id: recipientLineId,
-      channel: 'LINE',
-      message_type: comm.message_type,
-      title: comm.card_design?.title || comm.message_id,
-      content: `LINE Card Message: ${comm.card_design?.title}`,
-      priority: comm.priority,
-      line_card_data: comm,
-      action_required: comm.action_buttons?.length > 0,
-      action_deadline: comm.action_buttons?.find((btn: any) => btn.deadline_hours)
-        ? new Date(Date.now() + (comm.action_buttons.find((btn: any) => btn.deadline_hours).deadline_hours * 60 * 60 * 1000)).toISOString()
-        : null
-    });
+    // Save notification to database
+    const { data: notification, error: notifError } = await supabase
+      .from('notifications')
+      .insert({
+        session_id: sessionId,
+        machine_id: machineId,
+        recipient_type: comm.recipient_type,
+        recipient_name: recipientName,
+        recipient_line_id: recipientLineId,
+        channel: 'LINE',
+        message_type: comm.message_type,
+        title: comm.card_design?.title || comm.message_id,
+        content: comm.card_design?.content || `LINE Card Message: ${comm.card_design?.title}`,
+        priority: comm.priority,
+        line_card_data: comm,
+        action_required: comm.action_buttons?.length > 0,
+        action_deadline: comm.action_buttons?.find((btn: any) => btn.deadline_hours)
+          ? new Date(Date.now() + (comm.action_buttons.find((btn: any) => btn.deadline_hours).deadline_hours * 60 * 60 * 1000)).toISOString()
+          : null
+      })
+      .select()
+      .single();
+
+    if (notifError) {
+      console.error('Error saving notification:', notifError);
+      continue;
+    }
+
+    // Send LINE message if we have a valid line ID
+    if (recipientLineId && recipientLineId !== 'U987654321fedcba') {
+      try {
+        let messageContent;
+
+        // Create appropriate message based on recipient type
+        if (comm.recipient_type === 'TECHNICIAN' && comm.message_type === 'WORK_ORDER') {
+          // Create work order card for technician using actual work order
+          const actualWorkOrder = workOrder || {
+            id: `wo-${Date.now()}`, // Fallback if no work order
+            machine_id: machineId,
+            priority: comm.priority,
+            scheduled_start: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+            description: comm.card_design?.content || 'กรุณาดำเนินการซ่อมเครื่องจักร'
+          };
+          messageContent = createWorkOrderCard(actualWorkOrder);
+        } else {
+          // Create general notification card for managers
+          messageContent = createManagerNotificationCard({
+            title: comm.card_design?.title || comm.message_id,
+            content: comm.card_design?.content || comm.message_id,
+            priority: comm.priority
+          });
+        }
+
+        // Send via LINE API
+        const sendResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/line/send-message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            to: recipientLineId,
+            messages: [messageContent]
+          })
+        });
+
+        if (sendResponse.ok) {
+          const sendResult = await sendResponse.json();
+          console.log('LINE message sent successfully:', sendResult);
+
+          // Update notification with message ID
+          await supabase
+            .from('notifications')
+            .update({
+              line_message_id: sendResult.messageId,
+              sent_at: new Date().toISOString()
+            })
+            .eq('id', notification.id);
+        } else {
+          console.error('Failed to send LINE message:', await sendResponse.text());
+        }
+      } catch (error) {
+        console.error('Error sending LINE message:', error);
+      }
+    }
   }
 }
 
