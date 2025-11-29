@@ -42,7 +42,7 @@ export function BusinessValueResults({ sessionId }: Props) {
         { event: '*', schema: 'public', table: 'business_value_metrics', filter: `session_id=eq.${sessionId}` },
         (payload: { new: Record<string, unknown> }) => {
           if (payload.new) {
-            setBusinessMetrics(payload.new as BusinessValueMetrics);
+            setBusinessMetrics(payload.new as unknown as BusinessValueMetrics);
           }
         }
       )

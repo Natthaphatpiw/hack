@@ -44,14 +44,14 @@ export function BusinessValueSummary({ sessionId }: Props) {
         .select('status');
 
       if (businessData && !businessError) {
-        const totalSavings = businessData.reduce((sum, item) => sum + (item.cost_savings || 0), 0);
-        const totalDowntime = businessData.reduce((sum, item) => sum + (item.avoided_downtime_hours || 0), 0);
+        const totalSavings = businessData.reduce((sum: number, item: any) => sum + (item.cost_savings || 0), 0);
+        const totalDowntime = businessData.reduce((sum: number, item: any) => sum + (item.avoided_downtime_hours || 0), 0);
         const avgRoi = businessData.length > 0
-          ? businessData.reduce((sum, item) => sum + (item.roi_percentage || 0), 0) / businessData.length
+          ? businessData.reduce((sum: number, item: any) => sum + (item.roi_percentage || 0), 0) / businessData.length
           : 0;
 
-        const activeMaintenance = workOrders?.filter(wo => wo.status === 'IN_PROGRESS').length || 0;
-        const completedMaintenance = workOrders?.filter(wo => wo.status === 'COMPLETED').length || 0;
+        const activeMaintenance = workOrders?.filter((wo: any) => wo.status === 'IN_PROGRESS').length || 0;
+        const completedMaintenance = workOrders?.filter((wo: any) => wo.status === 'COMPLETED').length || 0;
 
         setMetrics({
           total_sessions: sessionCount || 0,

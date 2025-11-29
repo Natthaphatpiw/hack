@@ -200,7 +200,7 @@ export function AgentPipelineVisualization({ sessionId }: Props) {
                       'bg-slate-800/50 border-slate-700 shadow-none opacity-60'}
                   `}>
                     <div className={`transition-all duration-300 ${isCurrentAgent ? 'text-cyan-300 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]' : status === 'completed' ? 'text-emerald-300' : 'text-slate-500'}`}>
-                        {meta.icon}
+                    {meta.icon}
                     </div>
                     
                     {/* Status indicator badge */}
@@ -219,19 +219,19 @@ export function AgentPipelineVisualization({ sessionId }: Props) {
                 {/* Agent Label */}
                 <div className="mt-4 text-center transition-all duration-300">
                     <span className={`block text-xs font-bold uppercase tracking-wider ${
-                    status === 'completed' ? 'text-emerald-400' :
+                  status === 'completed' ? 'text-emerald-400' :
                     status === 'running' ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]' :
                     'text-slate-600'
-                    }`}>
-                    {meta.label}
-                    </span>
+                }`}>
+                  {meta.label}
+                </span>
                     <span className={`block text-[10px] mt-1 font-mono ${
                     status === 'completed' ? 'text-emerald-500/50' :
                     status === 'running' ? 'text-cyan-500/70' :
                     'text-slate-700'
-                    }`}>
-                    {agentName}
-                    </span>
+                }`}>
+                  {agentName}
+                </span>
                 </div>
               </div>
               
@@ -270,7 +270,7 @@ export function AgentPipelineVisualization({ sessionId }: Props) {
                     <span className="text-xs text-slate-400 block uppercase tracking-wider mb-0.5">System Activity</span>
                     <span className="text-sm text-cyan-100 font-medium">{session.current_action}</span>
                 </div>
-            </div>
+          </div>
         </div>
       )}
 

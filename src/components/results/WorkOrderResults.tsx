@@ -97,8 +97,8 @@ export function WorkOrderResults({ sessionId }: Props) {
               Maintenance Work Order
             </CardTitle>
             <div className="flex items-center gap-3">
-              <Badge variant="outline" className={getStatusColor(workOrder.status)}>
-                {workOrder.status}
+              <Badge variant="outline" className="border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                SCHEDULED
               </Badge>
               <Badge variant="outline" className="border-slate-500/50 text-slate-400">
                 {workOrder.woNumber}
@@ -123,11 +123,11 @@ export function WorkOrderResults({ sessionId }: Props) {
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Maintenance Type
                 </label>
-                <div className="mt-2">
-                  <Badge variant="outline" className="border-cyan-500/50 text-cyan-400 bg-cyan-500/10">
-                    {workOrder.maintenanceType || 'PREDICTIVE'}
-                  </Badge>
-                </div>
+                  <div className="mt-2">
+                    <Badge variant="outline" className="border-cyan-500/50 text-cyan-400 bg-cyan-500/10">
+                      PREDICTIVE
+                    </Badge>
+                  </div>
               </div>
 
               <div>
@@ -218,7 +218,6 @@ export function WorkOrderResults({ sessionId }: Props) {
                       </div>
                       <div className="text-right">
                         <p className="text-white font-medium">Qty: {part.quantity}</p>
-                        <p className="text-xs text-green-400">฿{part.unitCost?.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
@@ -227,44 +226,6 @@ export function WorkOrderResults({ sessionId }: Props) {
             </div>
           )}
 
-          {/* Safety & Quality */}
-          {(workOrder.safetyRequirements || workOrder.qualityChecks) && (
-            <div className="border-t border-slate-700 pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {workOrder.safetyRequirements && workOrder.safetyRequirements.length > 0 && (
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">
-                      Safety Requirements
-                    </label>
-                    <div className="space-y-2">
-                      {workOrder.safetyRequirements.map((req, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-red-500/10 rounded border border-red-500/20">
-                          <AlertTriangle className="h-4 w-4 text-red-400" />
-                          <span className="text-sm text-slate-300">{req}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {workOrder.qualityChecks && workOrder.qualityChecks.length > 0 && (
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">
-                      Quality Checks
-                    </label>
-                    <div className="space-y-2">
-                      {workOrder.qualityChecks.map((check, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-blue-500/10 rounded border border-blue-500/20">
-                          <CheckCircle className="h-4 w-4 text-blue-400" />
-                          <span className="text-sm text-slate-300">{check}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Description */}
           <div className="border-t border-slate-700 pt-6">

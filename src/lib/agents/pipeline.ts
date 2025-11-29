@@ -73,10 +73,10 @@ function buildAgentGraph() {
     .addNode('diagnostician', diagnosticianNode)
     .addNode('orchestrator', orchestratorNode)
     .addNode('liaison', liaisonNode)
-
+    
     // Add edges
     .addEdge(START, 'sentinel')
-
+    
     // Conditional edge after sentinel
     .addConditionalEdges(
       'sentinel',
@@ -86,7 +86,7 @@ function buildAgentGraph() {
         end: END
       }
     )
-
+    
     // Conditional edge after diagnostician
     .addConditionalEdges(
       'diagnostician',
@@ -96,7 +96,7 @@ function buildAgentGraph() {
         liaison: 'liaison'
       }
     )
-
+    
     // Sequential edges for the rest
     .addEdge('orchestrator', 'liaison')
     .addEdge('liaison', END);

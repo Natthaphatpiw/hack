@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase/client';
 import type { Machine, AnomalyScenario } from '@/types';
-import { Zap, AlertTriangle, Thermometer, Activity, Gauge, Flame } from 'lucide-react';
+import { Zap, AlertTriangle, Thermometer, Activity, Gauge, Flame, Loader2 } from 'lucide-react';
 
 const ANOMALY_SCENARIOS: AnomalyScenario[] = [
   {
@@ -98,7 +98,7 @@ const ANOMALY_SCENARIOS: AnomalyScenario[] = [
       vib_peak_accel: 0.9,
       bearing_temp: 82,
       pressure: 8.8,
-      status_flag: 'HIGH'
+      status_flag: 'WARNING'
     }
   },
   {
@@ -257,28 +257,28 @@ export function AnomalyInjector({ onInject }: Props) {
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="flex items-center justify-between p-2 rounded bg-black/20">
                 <div className="flex items-center gap-2">
-                    <Activity className="h-3 w-3 text-blue-400" />
+                <Activity className="h-3 w-3 text-blue-400" />
                     <span className="text-slate-400">Vib H</span>
                 </div>
                 <span className="font-mono font-bold text-white">{selectedScenarioData.values.vib_rms_horizontal}</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded bg-black/20">
                 <div className="flex items-center gap-2">
-                    <Activity className="h-3 w-3 text-indigo-400" />
+                <Activity className="h-3 w-3 text-indigo-400" />
                     <span className="text-slate-400">Vib V</span>
                 </div>
                 <span className="font-mono font-bold text-white">{selectedScenarioData.values.vib_rms_vertical}</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded bg-black/20">
                 <div className="flex items-center gap-2">
-                    <Thermometer className="h-3 w-3 text-orange-400" />
+                <Thermometer className="h-3 w-3 text-orange-400" />
                     <span className="text-slate-400">Temp</span>
                 </div>
                 <span className="font-mono font-bold text-white">{selectedScenarioData.values.bearing_temp}°C</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded bg-black/20">
                 <div className="flex items-center gap-2">
-                    <Gauge className="h-3 w-3 text-cyan-400" />
+                <Gauge className="h-3 w-3 text-cyan-400" />
                     <span className="text-slate-400">Pres.</span>
                 </div>
                 <span className="font-mono font-bold text-white">{selectedScenarioData.values.pressure} Bar</span>

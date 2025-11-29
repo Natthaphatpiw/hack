@@ -74,8 +74,8 @@ export function DiagnosisResults({ sessionId }: Props) {
     );
   }
 
-  const confidenceColor = diagnosis.confidenceLevel > 80 ? 'text-emerald-400' :
-                         diagnosis.confidenceLevel > 60 ? 'text-amber-400' : 'text-red-400';
+  const confidenceColor = diagnosis.confidence > 80 ? 'text-emerald-400' :
+                         diagnosis.confidence > 60 ? 'text-amber-400' : 'text-red-400';
 
   return (
     <div className="space-y-6">
@@ -111,14 +111,14 @@ export function DiagnosisResults({ sessionId }: Props) {
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   AI Confidence Level
                 </label>
-                <div className="mt-2 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className={confidenceColor}>Confidence: {diagnosis.confidenceLevel}%</span>
-                  </div>
-                  <Progress
-                    value={diagnosis.confidenceLevel}
-                    className="h-2 bg-slate-700"
-                  />
+                  <div className="mt-2 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className={confidenceColor}>Confidence: {diagnosis.confidence}%</span>
+                    </div>
+                    <Progress
+                      value={diagnosis.confidence}
+                      className="h-2 bg-slate-700"
+                    />
                 </div>
               </div>
             </div>

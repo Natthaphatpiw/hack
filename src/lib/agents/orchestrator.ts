@@ -231,8 +231,8 @@ ${JSON.stringify(parts?.map(p => ({
       "employee_id": "EMP001",
       "line_id": "U1234567890abcdef",
       "confidence_score": 95,
-      "selection_reason": "เหตุผลที่เลือก"
-    },
+    "selection_reason": "เหตุผลที่เลือก"
+  },
     "backup_technicians": ["ช่างสำรอง1", "ช่างสำรอง2"]
   },
   "parts_analysis": {
@@ -358,8 +358,8 @@ ${JSON.stringify(parts?.map(p => ({
         employee_id: string;
         line_id: string;
         confidence_score: number;
-        selection_reason: string;
-      };
+      selection_reason: string;
+    };
       backup_technicians: string[];
     };
     parts_analysis?: {
@@ -452,15 +452,17 @@ ${JSON.stringify(parts?.map(p => ({
     // Fallback
     const now = new Date();
     parsedResponse = {
-      title: `ซ่อม ${state.machine.name} - ${state.diagnosis.rootCause}`,
-      priority: state.anomalyDetails?.severity === 'CRITICAL' ? 'URGENT' : 'HIGH',
-      assignedTechnician: technicians?.[0]?.name || 'Unassigned',
-      scheduledStart: now.toISOString(),
-      scheduledEnd: new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString(),
-      partsNeeded: [],
-      estimatedCost: 5000,
+      work_order: {
+        title: `ซ่อม ${state.machine.name} - ${state.diagnosis.rootCause}`,
+        priority: state.anomalyDetails?.severity === 'CRITICAL' ? 'URGENT' : 'HIGH',
+        assigned_technician: technicians?.[0]?.name || 'Unassigned',
+        scheduled_start: now.toISOString(),
+        scheduled_end: new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString(),
+        parts_needed: [],
+        estimated_cost: 5000
+      },
       reasoning: 'แผนเริ่มต้น - ต้องตรวจสอบเพิ่มเติม'
-    };
+    } as any;
   }
   
   // Add AI thinking rounds
@@ -486,12 +488,12 @@ ${JSON.stringify(parts?.map(p => ({
     thinkingRounds.length + 1,
     'สรุปและสร้างใบสั่งงาน',
     `Work Order: ${woNumber}
-- Title: ${parsedResponse.title}
-- Priority: ${parsedResponse.priority}
-- Technician: ${parsedResponse.assignedTechnician}
-- Parts: ${parsedResponse.partsNeeded.length} รายการ
-- Cost: ฿${parsedResponse.estimatedCost}`,
-    `สร้างใบสั่งงานเรียบร้อย - ส่งต่อให้ Safety Agent ตรวจสอบ`
+- Title: ${parsedResponse.work_order?.title || 'Maintenance'}
+- Priority: ${parsedResponse.work_order?.priority || 'MEDIUM'}
+- Technician: ${parsedResponse.work_order?.assigned_technician || 'Unassigned'}
+- Parts: ${parsedResponse.work_order?.parts_needed?.length || 0} รายการ
+- Cost: ฿${parsedResponse.work_order?.estimated_cost || parsedResponse.cost_analysis?.total_estimated_cost || 0}`,
+    `สร้างใบสั่งงานเรียบร้อย - ส่งต่อให้ Liaison Agent สื่อสาร`
   ));
   
   // Create decision path for technician selection
@@ -503,13 +505,13 @@ ${JSON.stringify(parts?.map(p => ({
       pros: c.reasons,
       cons: [],
       score: c.match_score,
-      selected: c.name === parsedResponse.technician_selection?.selected,
-      reason: c.name === parsedResponse.technician_selection?.selected 
-        ? parsedResponse.technician_selection.selection_reason 
+      selected: c.name === parsedResponse.technician_selection?.selected_technician?.name,
+      reason: c.name === parsedResponse.technician_selection?.selected_technician?.name 
+        ? parsedResponse.technician_selection.selected_technician.selection_reason 
         : undefined
     })) || [
       {
-        option: parsedResponse.assignedTechnician,
+        option: parsedResponse.work_order?.assigned_technician || 'Unassigned',
         description: 'ช่างที่ว่าง',
         pros: ['พร้อมรับงาน'],
         cons: [],
@@ -518,35 +520,25 @@ ${JSON.stringify(parts?.map(p => ({
         reason: parsedResponse.reasoning
       }
     ],
-    parsedResponse.assignedTechnician,
-    parsedResponse.technician_selection?.selection_reason || parsedResponse.reasoning
+    parsedResponse.work_order?.assigned_technician || 'Unassigned',
+    parsedResponse.technician_selection?.selected_technician?.selection_reason || parsedResponse.reasoning
   );
   
   // Prepare work order
   const workOrder: WorkOrder = {
     woNumber,
-    diagnosisId: state.diagnosisId,
-    machineId: state.machineId,
-    sessionId: state.sessionId,
     title: parsedResponse.work_order?.title || 'Maintenance Work Order',
     description: parsedResponse.work_order?.description || parsedResponse.reasoning,
     priority: parsedResponse.work_order?.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' || 'HIGH',
     assignedTechnician: parsedResponse.work_order?.assigned_technician || parsedResponse.technician_selection?.selected_technician?.name || 'Unassigned',
-    assignedTechnicianLineId: parsedResponse.work_order?.assigned_line_id,
     scheduledStart: parsedResponse.work_order?.scheduled_start || new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
     scheduledEnd: parsedResponse.work_order?.scheduled_end || new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-    estimatedDowntimeStart: parsedResponse.work_order?.estimated_downtime_start,
-    estimatedDowntimeEnd: parsedResponse.work_order?.estimated_downtime_end,
     partsNeeded: parsedResponse.work_order?.parts_needed?.map(p => ({
       partNumber: p.part_number,
       name: p.name,
-      quantity: p.quantity,
-      unitCost: p.unit_cost
+      quantity: p.quantity
     })) || [],
     estimatedCost: parsedResponse.work_order?.estimated_cost || parsedResponse.cost_analysis?.total_estimated_cost || 0,
-    maintenanceType: parsedResponse.work_order?.maintenance_type || 'PREDICTIVE',
-    safetyRequirements: parsedResponse.work_order?.safety_requirements,
-    qualityChecks: parsedResponse.work_order?.quality_checks,
     reasoning: parsedResponse.reasoning
   };
   
@@ -579,12 +571,12 @@ ${JSON.stringify(parts?.map(p => ({
   await saveBusinessValueMetrics(state.sessionId, state.machineId, parsedResponse);
 
   await updatePipelineStatus(
-    state.sessionId,
-    'ORCHESTRATOR',
-    `สร้าง ${woNumber} - ${parsedResponse.priority}`,
+    state.sessionId, 
+    'ORCHESTRATOR', 
+    `สร้าง ${woNumber} - ${parsedResponse.work_order?.priority || 'MEDIUM'}`,
     60
   );
-
+  
   return {
     workOrder,
     technicians: technicians as Technician[],

@@ -338,8 +338,8 @@ ${state.anomalyDetails.metrics.map(m => `- ${m.metric}: ${m.value} (threshold: $
 ${parsedResponse.possible_causes?.map(c => `- ${c.cause}: ${c.confidence}% (${c.supporting_evidence.length} หลักฐานสนับสนุน)`).join('\n') || 'N/A'}
 
 สาเหตุที่เลือก: ${parsedResponse.selected_cause}
-Confidence: ${parsedResponse.confidence}%`,
-    `วินิจฉัยว่าเป็น ${parsedResponse.rootCause} (${parsedResponse.confidence}% confidence)`
+Confidence: ${parsedResponse.confidence_level}%`,
+    `วินิจฉัยว่าเป็น ${parsedResponse.root_cause} (${parsedResponse.confidence_level}% confidence)`
   ));
   
   // Create decision path
@@ -356,10 +356,10 @@ Confidence: ${parsedResponse.confidence}%`,
     })) || [
       {
         option: parsedResponse.selected_cause,
-        description: parsedResponse.rootCause,
-        pros: parsedResponse.supportingEvidence,
+        description: parsedResponse.root_cause,
+        pros: parsedResponse.supporting_evidence,
         cons: [],
-        score: parsedResponse.confidence,
+        score: parsedResponse.confidence_level,
         selected: true,
         reason: parsedResponse.reasoning
       }
@@ -375,14 +375,7 @@ Confidence: ${parsedResponse.confidence}%`,
     supportingEvidence: parsedResponse.supporting_evidence,
     recommendedAction: parsedResponse.recommended_action,
     timeToFailure: `${parsedResponse.prediction?.predicted_failure_days || 7} days`,
-    reasoning: parsedResponse.reasoning,
-    predictedFailureDays: parsedResponse.prediction?.predicted_failure_days,
-    confidenceLevel: parsedResponse.confidence_level,
-    failureProbability: parsedResponse.prediction?.failure_probability,
-    maintenanceUrgency: parsedResponse.prediction?.maintenance_urgency,
-    estimatedDowntimeHours: parsedResponse.prediction?.estimated_downtime_hours,
-    costImpact: parsedResponse.business_impact?.cost_impact,
-    businessImpactScore: parsedResponse.business_impact?.business_impact_score
+    reasoning: parsedResponse.reasoning
   };
   
   // Create agent log
@@ -410,14 +403,14 @@ Confidence: ${parsedResponse.confidence}%`,
   await updatePipelineStatus(
     state.sessionId, 
     'DIAGNOSTICIAN', 
-    `วินิจฉัย: ${parsedResponse.rootCause}`,
+    `วินิจฉัย: ${parsedResponse.root_cause}`,
     40
   );
   
   return {
     diagnosis,
     currentAgent: 'DIAGNOSTICIAN',
-    currentAction: `วินิจฉัย: ${parsedResponse.rootCause}`,
+    currentAction: `วินิจฉัย: ${parsedResponse.root_cause}`,
     progress: 40,
     agentLogs: [agentLog]
   };

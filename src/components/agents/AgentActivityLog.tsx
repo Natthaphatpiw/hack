@@ -96,12 +96,12 @@ export function AgentActivityLog({ sessionId }: Props) {
                <Brain className="h-5 w-5 text-blue-400" />
             </div>
             Live Agent Intelligence Log
-          </CardTitle>
-          {sessionId && (
+        </CardTitle>
+        {sessionId && (
             <Badge variant="outline" className="text-xs font-mono border-slate-600 text-slate-400 bg-slate-900/50">
               SESSION: {sessionId.slice(0, 8)}
-            </Badge>
-          )}
+          </Badge>
+        )}
         </div>
       </CardHeader>
       <CardContent className="p-0 bg-slate-900/30">

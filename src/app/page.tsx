@@ -121,7 +121,7 @@ export default function Dashboard() {
               </TabsList>
 
               <TabsContent value="logs" className="mt-6">
-                <AgentActivityLog sessionId={currentSessionId || undefined} />
+          <AgentActivityLog sessionId={currentSessionId || undefined} />
               </TabsContent>
 
               <TabsContent value="diagnosis" className="mt-6">

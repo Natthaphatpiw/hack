@@ -216,8 +216,8 @@ ${recipients.map(r => `- ${r.type}: Priority ${r.priority}`).join('\n')}
             "Business Impact": "ลด downtime 4 ชั่วโมง",
             "Production Saved": "6,000 THB"
           }
-        }
-      ],
+    }
+  ],
       "action_buttons": [
         {
           "label": "✅ ยอมรับงาน",
@@ -231,7 +231,7 @@ ${recipients.map(r => `- ${r.type}: Priority ${r.priority}`).join('\n')}
           "color": "#F44336",
           "reason_required": true
         },
-        {
+    {
           "label": "📞 ติดต่อ Supervisor",
           "action": "CONTACT_SUPERVISOR",
           "color": "#2196F3"
