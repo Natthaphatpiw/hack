@@ -449,8 +449,9 @@ async function saveAgentLog(log: AgentLog) {
 }
 
 async function saveDiagnosis(sessionId: string, machineId: string, diagnosis: Diagnosis) {
+  console.log('💾 Saving diagnosis to database:', { sessionId, machineId, diagnosis });
   const supabase = getSupabaseServer();
-  await supabase.from('diagnoses').insert({
+  const result = await supabase.from('diagnoses').insert({
     machine_id: machineId,
     session_id: sessionId,
     root_cause: diagnosis.rootCause,
@@ -466,5 +467,7 @@ async function saveDiagnosis(sessionId: string, machineId: string, diagnosis: Di
     cost_impact: (diagnosis as any).costImpact,
     business_impact_score: (diagnosis as any).businessImpactScore
   });
+
+  console.log('💾 Diagnosis save result:', result);
 }
 

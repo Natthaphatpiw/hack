@@ -567,16 +567,19 @@ ${JSON.stringify(parts?.map(p => ({
   
   await saveAgentLog(agentLog);
 
+  // Save work order to database
+  await saveWorkOrder(state.sessionId, state.machineId, workOrder);
+
   // Calculate and save business value metrics
   await saveBusinessValueMetrics(state.sessionId, state.machineId, parsedResponse);
 
   await updatePipelineStatus(
-    state.sessionId, 
-    'ORCHESTRATOR', 
+    state.sessionId,
+    'ORCHESTRATOR',
     `สร้าง ${woNumber} - ${parsedResponse.work_order?.priority || 'MEDIUM'}`,
     60
   );
-  
+
   return {
     workOrder,
     technicians: technicians as Technician[],
@@ -589,6 +592,31 @@ ${JSON.stringify(parts?.map(p => ({
 }
 
 // Helper functions
+async function saveWorkOrder(sessionId: string, machineId: string, workOrder: WorkOrder) {
+  console.log('💾 Saving work order to database:', { sessionId, machineId, workOrder });
+  const supabase = getSupabaseServer();
+  const result = await supabase.from('work_orders').insert({
+    wo_number: workOrder.woNumber,
+    machine_id: machineId,
+    session_id: sessionId,
+    title: workOrder.title,
+    description: workOrder.description,
+    priority: workOrder.priority,
+    assigned_technician: workOrder.assignedTechnician,
+    scheduled_start: workOrder.scheduledStart,
+    scheduled_end: workOrder.scheduledEnd,
+    parts_needed: workOrder.partsNeeded.map(p => ({
+      part_number: p.partNumber,
+      name: p.name,
+      quantity: p.quantity
+    })),
+    estimated_cost: workOrder.estimatedCost,
+    reasoning: workOrder.reasoning
+  });
+
+  console.log('💾 Work order save result:', result);
+}
+
 async function updatePipelineStatus(sessionId: string, agent: string, action: string, progress: number) {
   const supabase = getSupabaseServer();
   await supabase.from('pipeline_sessions').update({

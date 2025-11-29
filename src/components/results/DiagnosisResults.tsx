@@ -17,6 +17,8 @@ export function DiagnosisResults({ sessionId }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('DiagnosisResults: sessionId =', sessionId);
+
     if (sessionId) {
       fetchDiagnosis(sessionId);
     } else {
@@ -28,8 +30,9 @@ export function DiagnosisResults({ sessionId }: Props) {
     const subscription = supabase
       .channel('diagnosis-updates')
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'diagnoses', filter: `session_id=eq.${sessionId}` },
+        { event: '*', schema: 'public', table: 'diagnoses', filter: sessionId ? `session_id=eq.${sessionId}` : undefined },
         (payload: { new: Record<string, unknown> }) => {
+          console.log('DiagnosisResults: received update', payload.new);
           if (payload.new) {
             setDiagnosis(payload.new as unknown as Diagnosis);
           }
@@ -43,11 +46,19 @@ export function DiagnosisResults({ sessionId }: Props) {
   }, [sessionId]);
 
   async function fetchDiagnosis(sid: string) {
-    const { data } = await supabase
+    console.log('DiagnosisResults: fetching diagnosis for session', sid);
+    const { data, error } = await supabase
       .from('diagnoses')
       .select('*')
       .eq('session_id', sid)
       .single();
+
+    console.log('DiagnosisResults: fetch result', { data, error });
+
+    if (data) {
+      setDiagnosis(data);
+    }
+    setLoading(false);
 
     if (data) setDiagnosis(data);
     setLoading(false);

@@ -17,6 +17,8 @@ export function WorkOrderResults({ sessionId }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('WorkOrderResults: sessionId =', sessionId);
+
     if (sessionId) {
       fetchWorkOrder(sessionId);
     } else {
@@ -28,8 +30,9 @@ export function WorkOrderResults({ sessionId }: Props) {
     const subscription = supabase
       .channel('workorder-updates')
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'work_orders', filter: `session_id=eq.${sessionId}` },
+        { event: '*', schema: 'public', table: 'work_orders', filter: sessionId ? `session_id=eq.${sessionId}` : undefined },
         (payload: { new: Record<string, unknown> }) => {
+          console.log('WorkOrderResults: received update', payload.new);
           if (payload.new) {
             setWorkOrder(payload.new as unknown as WorkOrder);
           }
@@ -43,11 +46,19 @@ export function WorkOrderResults({ sessionId }: Props) {
   }, [sessionId]);
 
   async function fetchWorkOrder(sid: string) {
-    const { data } = await supabase
+    console.log('WorkOrderResults: fetching work order for session', sid);
+    const { data, error } = await supabase
       .from('work_orders')
       .select('*')
       .eq('session_id', sid)
       .single();
+
+    console.log('WorkOrderResults: fetch result', { data, error });
+
+    if (data) {
+      setWorkOrder(data);
+    }
+    setLoading(false);
 
     if (data) setWorkOrder(data);
     setLoading(false);
