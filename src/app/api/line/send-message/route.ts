@@ -12,6 +12,7 @@ interface LineMessage {
 export async function POST(request: NextRequest) {
   try {
     const { to, messages } = await request.json();
+    console.log('📨 LINE API called: sending to', to, 'with', messages?.length, 'messages');
 
     if (!to || !messages || !Array.isArray(messages)) {
       return NextResponse.json(

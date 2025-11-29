@@ -875,7 +875,10 @@ async function saveNotifications(sessionId: string, machineId: string, lineCommu
     }
 
     // Send LINE message if we have a valid line ID
+    console.log(`📱 Checking LINE message for ${comm.recipient_type} ${recipientName}: lineId=${recipientLineId}`);
+
     if (recipientLineId && recipientLineId !== 'U987654321fedcba') {
+      console.log(`Sending LINE message to ${recipientName} (${recipientLineId}) for ${comm.message_type}`);
       try {
         let messageContent;
 
@@ -913,7 +916,7 @@ async function saveNotifications(sessionId: string, machineId: string, lineCommu
 
         if (sendResponse.ok) {
           const sendResult = await sendResponse.json();
-          console.log('LINE message sent successfully:', sendResult);
+          console.log('✅ LINE message sent successfully to', recipientName, ':', sendResult);
 
           // Update notification with message ID
           await supabase
@@ -923,12 +926,17 @@ async function saveNotifications(sessionId: string, machineId: string, lineCommu
               sent_at: new Date().toISOString()
             })
             .eq('id', notification.id);
+
+          console.log('✅ Notification updated with LINE message ID');
         } else {
-          console.error('Failed to send LINE message:', await sendResponse.text());
+          const errorText = await sendResponse.text();
+          console.error('❌ Failed to send LINE message to', recipientName, ':', sendResponse.status, errorText);
         }
       } catch (error) {
-        console.error('Error sending LINE message:', error);
+        console.error('❌ Error sending LINE message to', recipientName, ':', error);
       }
+    } else {
+      console.log(`⚠️ Skipping LINE message for ${comm.recipient_type} ${recipientName}: invalid lineId (${recipientLineId})`);
     }
   }
 }
