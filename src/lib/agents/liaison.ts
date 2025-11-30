@@ -465,7 +465,7 @@ ${state.workOrder ? `ต้องสร้าง 2 แจ้งเตือน:
             "เวลาโดยประมาณ": "4 ชั่วโมง",
             "ความยาก": "Medium",
             "Safety Requirements": "Lockout-Tagout, PPE"
-          }
+    }
         },
         {
           "type": "schedule",
@@ -919,30 +919,24 @@ async function saveNotifications(sessionId: string, machineId: string, lineCommu
     let recipientLineId = null;
     let recipientName = comm.recipient_name;
 
-    // Map recipient to line ID from employees table
+    // HARDCODED LINE ID for testing - send all messages to this ID
+    recipientLineId = 'Ue14f75dc6a31ee85163ee2353d45d699';
+
+    // Update recipient name based on type for clarity
     if (comm.recipient_type === 'TECHNICIAN') {
-      const empInfo = employeeMap.get(comm.recipient_name);
-      recipientLineId = empInfo?.lineId;
+      recipientName = `${comm.recipient_name} (ช่าง)`;
     } else if (comm.recipient_type === 'PLANT_MANAGER' || comm.recipient_type === 'MAINTENANCE_HEAD') {
-      // Find manager/supervisor from employees
-      const managers = employees?.filter(e =>
-        e.role === 'MANAGER' || e.role === 'SUPERVISOR'
-      ) || [];
-      if (managers.length > 0) {
-        recipientLineId = managers[0].line_user_id;
-        recipientName = managers[0].name;
-      } else {
-        // Fallback mock ID for demo
-        recipientLineId = 'U987654321fedcba';
-      }
+      recipientName = `${comm.recipient_name} (ผู้บริหาร)`;
     }
+
+    console.log(`🎯 HARDCODED: Sending to LINE ID ${recipientLineId} for ${recipientName}`);
 
     // Save notification to database
     const { data: notification, error: notifError } = await supabase
       .from('notifications')
       .insert({
-        session_id: sessionId,
-        machine_id: machineId,
+      session_id: sessionId,
+      machine_id: machineId,
         recipient_type: comm.recipient_type,
         recipient_name: recipientName,
         recipient_line_id: recipientLineId,

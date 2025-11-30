@@ -453,8 +453,8 @@ ${JSON.stringify(parts?.map(p => ({
     const now = new Date();
     parsedResponse = {
       work_order: {
-        title: `ซ่อม ${state.machine.name} - ${state.diagnosis.rootCause}`,
-        priority: state.anomalyDetails?.severity === 'CRITICAL' ? 'URGENT' : 'HIGH',
+      title: `ซ่อม ${state.machine.name} - ${state.diagnosis.rootCause}`,
+      priority: state.anomalyDetails?.severity === 'CRITICAL' ? 'URGENT' : 'HIGH',
         assigned_technician: technicians?.[0]?.name || 'Unassigned',
         scheduled_start: now.toISOString(),
         scheduled_end: new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString(),
@@ -574,12 +574,12 @@ ${JSON.stringify(parts?.map(p => ({
   await saveBusinessValueMetrics(state.sessionId, state.machineId, parsedResponse);
 
   await updatePipelineStatus(
-    state.sessionId,
-    'ORCHESTRATOR',
+    state.sessionId, 
+    'ORCHESTRATOR', 
     `สร้าง ${woNumber} - ${parsedResponse.work_order?.priority || 'MEDIUM'}`,
     60
   );
-
+  
   return {
     workOrder,
     technicians: technicians as Technician[],
