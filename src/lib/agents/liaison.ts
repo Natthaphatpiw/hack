@@ -410,10 +410,15 @@ ${state.safetyApproval ? `Safety Decision:
 Recipients to notify:
 ${recipients.map(r => `- ${r.type}: Priority ${r.priority}`).join('\n')}
 
-${state.workOrder ? `แจ้งเตือนผู้บริหาร:
-- แจ้งการวางแผนงานซ่อมให้ช่าง ${state.workOrder.assignedTechnician}
-- แสดง business impact และ ROI
-- ติดตาม progress จนกว่าจะเสร็จสิ้น` : ''}
+${state.workOrder ? `ต้องสร้าง 2 แจ้งเตือน:
+1. WORK_ORDER_ASSIGNMENT สำหรับช่าง: ${state.workOrder.assignedTechnician}
+   - ส่ง work order card กับปุ่ม "รับงาน" และ "ซ่อมเสร็จ"
+   - แสดงรายละเอียดงานและอะไหล่ที่ต้องใช้
+
+2. WORK_ORDER_PLANNED สำหรับผู้บริหาร (MANAGER/SUPERVISOR)
+   - แจ้งการวางแผนงานซ่อมและ business impact
+   - แสดง ROI และ cost savings
+   - ติดตาม progress ของงาน` : ''}
 
 ตอบในรูปแบบ JSON พร้อม LINE card specifications:
 
@@ -431,7 +436,7 @@ ${state.workOrder ? `แจ้งเตือนผู้บริหาร:
       "message_id": "WO-ASSIGN-001",
       "recipient_type": "TECHNICIAN",
       "recipient_line_id": "U1234567890abcdef",
-      "recipient_name": "สมชาย ใจดี",
+      "recipient_name": "${state.workOrder?.assignedTechnician || 'ช่างซ่อม'}",
       "message_type": "WORK_ORDER_ASSIGNMENT",
       "priority": "HIGH",
       "card_design": {
@@ -699,6 +704,92 @@ ${state.workOrder ? `แจ้งเตือนผู้บริหาร:
         aiRound.observation,
         aiRound.conclusion
       ));
+    }
+  }
+
+  // Ensure work order notifications are created if work order exists
+  if (state.workOrder && parsedResponse.line_communications) {
+    const hasTechnicianNotification = parsedResponse.line_communications.some(
+      comm => comm.recipient_type === 'TECHNICIAN' && comm.message_type === 'WORK_ORDER_ASSIGNMENT'
+    );
+    const hasManagerNotification = parsedResponse.line_communications.some(
+      comm => comm.recipient_type === 'PLANT_MANAGER' && comm.message_type === 'WORK_ORDER_PLANNED'
+    );
+
+    // Add technician notification if missing
+    if (!hasTechnicianNotification) {
+      parsedResponse.line_communications.push({
+        message_id: `WO-ASSIGN-${Date.now()}`,
+        recipient_type: 'TECHNICIAN',
+        recipient_line_id: 'U1234567890abcdef', // Will be mapped in saveNotifications
+        recipient_name: state.workOrder.assignedTechnician,
+        message_type: 'WORK_ORDER_ASSIGNMENT',
+        priority: state.workOrder.priority,
+        card_design: {
+          header_color: state.workOrder.priority === 'URGENT' ? '#FF6B6B' : '#FF9800',
+          icon: '🔧',
+          title: `🎯 งานซ่อม: ${state.machine.name}`,
+          subtitle: `${state.workOrder.priority} • ${new Date(state.workOrder.scheduledStart).toLocaleString('th-TH')}`,
+          image_url: null
+        },
+        content_sections: [{
+          type: 'work_details',
+          title: '🔧 รายละเอียดงาน',
+          data: {
+            'เครื่องจักร': state.machine.name,
+            'งาน': state.workOrder.title,
+            'เวลา': new Date(state.workOrder.scheduledStart).toLocaleString('th-TH'),
+            'ความสำคัญ': state.workOrder.priority,
+            'ค่าประมาณ': `฿${state.workOrder.estimatedCost}`
+          }
+        }],
+        action_buttons: [{
+          label: '✅ รับงาน',
+          action: 'ACCEPT_WORK_ORDER',
+          color: '#4CAF50',
+          deadline_hours: 2
+        }, {
+          label: '🎯 ซ่อมเสร็จ',
+          action: 'COMPLETE_WORK_ORDER',
+          color: '#2196F3'
+        }],
+        reasoning: 'Work order assignment notification for technician'
+      });
+    }
+
+    // Add manager notification if missing
+    if (!hasManagerNotification) {
+      parsedResponse.line_communications.push({
+        message_id: `WO-PLANNED-${Date.now()}`,
+        recipient_type: 'PLANT_MANAGER',
+        recipient_line_id: 'U987654321fedcba', // Will be mapped in saveNotifications
+        recipient_name: 'ผู้จัดการโรงงาน',
+        message_type: 'WORK_ORDER_PLANNED',
+        priority: state.workOrder.priority === 'URGENT' ? 'HIGH' : 'MEDIUM',
+        card_design: {
+          header_color: '#2196F3',
+          icon: '📋',
+          title: `📋 วางแผนงานซ่อม: ${state.machine.name}`,
+          subtitle: `มอบหมายให้ ${state.workOrder.assignedTechnician}`,
+          image_url: null
+        },
+        content_sections: [{
+          type: 'work_summary',
+          title: '🔧 สรุปงานซ่อม',
+          data: {
+            'ช่างผู้รับผิดชอบ': state.workOrder.assignedTechnician,
+            'กำหนดเริ่มงาน': new Date(state.workOrder.scheduledStart).toLocaleString('th-TH'),
+            'เวลาโดยประมาณ': '4 ชั่วโมง',
+            'ค่าซ่อมโดยประมาณ': `฿${state.workOrder.estimatedCost}`
+          }
+        }],
+        action_buttons: [{
+          label: '✅ อนุมัติแผนงาน',
+          action: 'APPROVE_WORK_ORDER',
+          color: '#4CAF50'
+        }],
+        reasoning: 'Work order planning notification for manager'
+      });
     }
   }
   
